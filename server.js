@@ -1,81 +1,97 @@
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
+const fs = require('fs')
+const path = require('path')
+const express = require('express')
+const app = express()
+const PORT = process.env.PORT || 3002
+const db = require('./db/db.json')
+
+//Allows all notes to have a unique ID
 const { v4: uuidv4 } = require('uuid');
-const cors = require('cors');  // Import the cors middleware
-const app = express();
-const PORT = process.env.PORT || 3001;
 
-app.use(cors());  // Enable CORS for all routes
+//Allows public folder to be unblocked
+app.use(express.static('public'))
+app.use(express.json())
 
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
-
-// Helper functions
-function getNotes() {
-  const filePath = path.resolve(__dirname,  'db/db.json');
-  console.log('Reading from file:', filePath);
-  try {
-    const data = fs.readFileSync(filePath, 'utf8');
-    console.log(data); // Log the data to check if it's being read
-    return JSON.parse(data);
-  } catch (err) {
-    console.error(err);
-    return []; // Return an empty array if the file doesn't exist or cannot be read
-  }
-}
-
-function saveNotes(notes) {
-  const filePath = path.resolve(__dirname, 'db/db.json');
-  console.log('Writing to file:', filePath);
-  fs.writeFileSync(filePath, JSON.stringify(notes));
-}
-
-// API routes
-app.get('/api/notes', (req, res) => {
-  try {
-    const notes = getNotes();
-    console.log(notes); // Log the notes to check if they are being retrieved
-    res.json(notes);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/api/notes', (req, res) => {
-  const newNote = req.body;
-  newNote.id = uuidv4();
-  const notes = getNotes();
-  notes.push(newNote);
-  saveNotes(notes);
-  res.json(newNote);
-});
-
-app.delete('/api/notes/:id', (req, res) => {
-    const noteId = req.params.id;
-    console.log('Deleting note with ID:', noteId);
-  
-    const notes = getNotes();
-    const updatedNotes = notes.filter((note) => note.id !== noteId);
-    saveNotes(updatedNotes);
-  
-    res.json({ success: true, notes: updatedNotes });
+//API Routes
+// GET /api/notes should read the db.json file and return all saved notes as JSON.
+app.get("/notes", (req, res) => {
+    res.sendFile(path.join(__dirname, "/public/notes.html"));
   });
   
+  app.get("/api/notes", (req, res) => {
+    fs.readFile("./db/db.json", "utf8", (err, data) => {
+      if (err) {
+        res.status(500).send("Server error");
+        return;
+      }
+      res.json(JSON.parse(data));
+    });
+  });
+
+//POST 
+///api/notes receives a new note to save on the request body and add it to db.json, then returns new note to the client.
+app.post("/api/notes", (req, res) => {
+    const newNote = { ...req.body, id: uuidv4() };
   
+    fs.readFile("./db/db.json", "utf8", (err, data) => {
+      if (err) {
+        res.status(500).send("Server error");
+        return;
+      }
+      const notes = JSON.parse(data);
+  
+      notes.push(newNote);
+  
+      fs.writeFile("./db/db.json", JSON.stringify(notes), (err) => {
+        if (err) {
+          res.status(500).send("Server error");
+          return;
+        }
+        res.json(newNote);
+      });
+    });
+  });
 
-// HTML routes
+
+//DELETE
+// notes when the button is clicked by removing the note from db.json, saving and showing the updated database on the front end.
+app.delete("/api/notes/:id", (req, res) => {
+    const noteId = req.params.id;
+  
+    fs.readFile("./db/db.json", "utf8", (err, data) => {
+      if (err) {
+        res.status(500).send("Server error");
+        return;
+      }
+      let notes = JSON.parse(data);
+      notes = notes.filter((note) => note.id !== noteId);
+  
+      fs.writeFile("./db/db.json", JSON.stringify(notes), (err) => {
+        if (err) {
+          res.status(500).send("Server error");
+          return;
+        }
+        res.json({ message: "Note deleted" });
+      });
+    });
+  });
+
+//HTML Routes
+//Home
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'))
+})
+
+//Notes
 app.get('/notes', (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'public', 'notes.html'));
-});
+    res.sendFile(path.join(__dirname, 'public', 'notes.html'))
+})
 
+//Wildcard Route
 app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});
+    res.sendFile(path.join(__dirname, 'public', 'index.html'))
+})
 
-app.listen(PORT, () => {
-  console.log(`App listening on PORT ${PORT}`);
-});
+//App listens with front end on this port
+app.listen(PORT, () =>
+    console.log(`App listening on ${PORT}`))

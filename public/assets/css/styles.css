@@ -5,14 +5,11 @@ body {
   padding: 0;
 }
 
-.save-note,
-.new-note,
-.clear-btn {
-  display: inline-block;
-    margin-top: 10px;
+.save-note {
+  display: none;
 }
 
-.icons {
+.icons i {
   margin-left: 15px;
   margin-right: 15px;
   font-size: 1.5rem;
@@ -34,7 +31,7 @@ body {
 }
 
 .note-title {
-  height: 50px;
+  height: 70px;
   margin-top: 13px;
   font-size: 3rem;
 }
@@ -49,11 +46,10 @@ body {
   border-bottom: none;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
-  overflow-y: auto; /* Allow vertical scrolling */
 }
 
 .list-container {
-  padding-left: 20px; /* Adjust as needed */
+  padding-left: 0;
 }
 
 .list-container .list-group,
@@ -67,9 +63,6 @@ body {
 .list-item-title {
   display: inline-block;
   width: 75%;
-  white-space: nowrap; /* Prevent text wrapping */
-  overflow: hidden;
-  text-overflow: ellipsis; /* Display ellipsis (...) for overflowed text */
 }
 
 .list-container i {
@@ -82,7 +75,4 @@ body {
   border-right: none;
   padding: 20px;
   cursor: pointer;
-  overflow: hidden;
-  white-space: nowrap; /* Prevent text wrapping */
-  text-overflow: ellipsis; /* Display ellipsis (...) for overflowed text */
 }
